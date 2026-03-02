@@ -94,6 +94,14 @@ public class TrainerServiceImpl implements TrainerService {
         return trainingRepository.findByTrainerUserUsername(username);
     }
 
+    // TODO:
+    //  1) Extract duplicated authentication method in TraineeServiceImpl and TrainerServiceImpl
+    //  2) [Optional]
+    //  As stated by the task certain methods require authentication before they can be executed.
+    //  What if we could mark such methods somehow and have the authentication logic automatically applied
+    //  before the method body is even reached?
+    //  Note: (2) is purely for experimenting & learning purposes it will become NOT relevant later in course.
+    //  Yet if you want to give it a try, Custom annotation + Spring AOP can do the trick
     private void authenticate(String username, String password) {
         if (!matchUsernameAndPassword(username, password)) {
             throw new SecurityException("Invalid credentials: " + username);

@@ -29,6 +29,11 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Transactional
     @Override
+
+    // TODO:
+    //  [Optional]
+    //  You current solution works, alternatively we can wrap arguments into a DTO and validate it using Bean Validation API
+    //  It will be a nice separation of concerns and will allow us to reuse the same DTO in controller layer later
     public Training create(String traineeUsername, String trainerUsername,
                            String name, TrainingType.TrainingTypeName typeName,
                            Date date, int durationMinutes) {
@@ -64,6 +69,11 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Transactional(readOnly = true)
     @Override
+    // TODO:
+    //  [Optional]
+    //  Let's decide at which stage we become certain that the entity is found/not found
+    //  Is it at the service layer or in facade?
+    //  The Optional<T> chain should eventually end with a T or an exception
     public Optional<Training> select(Long id) {
         return trainingRepository.findById(id);
     }

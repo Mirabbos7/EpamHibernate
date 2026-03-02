@@ -18,6 +18,9 @@ public class Trainer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // TODO:
+    //  1) A good practice here and in other entities is to explicitly specify fetch type
+    //  2) Let's initialize collections to avoid NPE
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;

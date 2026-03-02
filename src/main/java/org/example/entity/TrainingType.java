@@ -24,6 +24,11 @@ public class TrainingType {
     @Enumerated(EnumType.STRING)
     private TrainingTypeName trainingTypeName;
 
+    // TODO:
+    //  Bidirectional or unidirectional relationship trade-off
+    //  1) Currently, there are no use-cases in the project where you call trainingType.getTrainings()
+    //  2) To find all trainings of a certain type, you can add a method in TrainingRepository
+    //  I recommend to start with simpler unidirectional relationship and only add the bidirectional one if you really need it.
     @OneToMany(mappedBy = "trainingType")
     private List<Training> trainings = new ArrayList<>();
 

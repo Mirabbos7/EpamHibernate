@@ -16,6 +16,8 @@ import java.util.List;
 @EqualsAndHashCode(exclude = {"user", "trainers", "trainings"})
 public class Trainee {
 
+    // TODO:
+    //  Each entity has an id, right? Can we somehow define it only once for all entities?
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -23,6 +25,10 @@ public class Trainee {
     private Date dateOfBirth;
     private String address;
 
+    // TODO:
+    //  Let's be explicit in code about database constraints:
+    //  1) Is this relation optional - in other words can Trainee exist without User?
+    //  2) Can we protect the table from having multiple Trainees with the same User?
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;

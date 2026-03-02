@@ -23,6 +23,8 @@ public class Training {
     @Column(nullable = false)
     private Date date;
     @Column(nullable = false)
+    // TODO:
+    //  It would be better to have a more descriptive name like 'durationInMinutes' or 'duration' + your comment.
     private int number; //in minutes
 
     @ManyToOne
