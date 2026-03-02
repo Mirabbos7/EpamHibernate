@@ -1,21 +1,20 @@
 package org.example.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-@ToString
-@EqualsAndHashCode
+@AllArgsConstructor
 @Table(name = "users")
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class User extends BaseEntity {
 
     @Column(name = "first_name", nullable = false)
     private String firstName;
@@ -26,15 +25,17 @@ public class User {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(nullable = false, columnDefinition = "varchar(255)")
+    @Column(nullable = false)
     private String password;
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, optional = true)
-    private Trainee traineeId;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, optional = true)
-    private Trainer trainerId;
+    @Override
+    public String toString() {
+        return "User{id=" + getId() +
+                ", username='" + username + '\'' +
+                ", isActive=" + isActive +
+                '}';
+    }
 }

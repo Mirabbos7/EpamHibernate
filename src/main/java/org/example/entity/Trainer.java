@@ -3,6 +3,7 @@ package org.example.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -11,24 +12,19 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@EqualsAndHashCode
-public class Trainer {
+public class Trainer extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToMany(mappedBy = "trainer")
-    private List<Training> trainings;
+    @OneToMany(mappedBy = "trainer", fetch = FetchType.LAZY)
+    private List<Training> trainings = new ArrayList<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "specialization")
     private TrainingType trainingType;
 
-    @ManyToMany(mappedBy = "trainers")
-    private List<Trainee> trainees;
+    @ManyToMany(mappedBy = "trainers", fetch = FetchType.LAZY)
+    private List<Trainee> trainees = new ArrayList<>();
 }
