@@ -21,6 +21,10 @@ public class TrainingTestDataCreator {
     private final TraineeTestDataCreator traineeTestDataCreator;
     private final TrainingTypeTestDataCreator trainingTypeTestDataCreator;
 
+    public Training givenTrainingExists() {
+        return givenTrainingExists(t -> {});
+    }
+
     public Training givenTrainingExists(Consumer<Training> config) {
         final var entity = new Training();
 
@@ -30,13 +34,13 @@ public class TrainingTestDataCreator {
         entity.setDurationInMinutes(60);
 
         // Relationships pre-populated for convenience
-        Trainer trainer = trainerTestDataCreator.givenTrainerExists(t -> {});
+        final var trainer = trainerTestDataCreator.givenTrainerExists();
         entity.setTrainer(trainer);
 
-        Trainee trainee = traineeTestDataCreator.givenTraineeExists(t -> {});
+        final var trainee = traineeTestDataCreator.givenTraineeExists();
         entity.setTrainee(trainee);
 
-        TrainingType trainingType = trainingTypeTestDataCreator.givenTrainingTypeExists(
+        final var trainingType = trainingTypeTestDataCreator.givenTrainingTypeExists(
                 tt -> tt.setTrainingTypeName(TrainingType.TrainingTypeName.CARDIO)
         );
         entity.setTrainingType(trainingType);
@@ -45,4 +49,3 @@ public class TrainingTestDataCreator {
         return trainingRepository.save(entity);
     }
 }
-

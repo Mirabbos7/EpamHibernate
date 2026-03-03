@@ -17,14 +17,18 @@ public class TrainerTestDataCreator {
     private final UserTestDataCreator userTestDataCreator;
     private final TrainingTypeTestDataCreator trainingTypeTestDataCreator;
 
+    public Trainer givenTrainerExists() {
+        return givenTrainerExists(t -> {});
+    }
+
     public Trainer givenTrainerExists(Consumer<Trainer> config) {
         final var entity = new Trainer();
 
         // Not-null fields
-        User user = userTestDataCreator.givenUserExists(u -> {});
+        final var user = userTestDataCreator.givenUserExists();
         entity.setUser(user);
 
-        TrainingType trainingType = trainingTypeTestDataCreator.givenTrainingTypeExists(
+        final var trainingType = trainingTypeTestDataCreator.givenTrainingTypeExists(
                 tt -> tt.setTrainingTypeName(TrainingType.TrainingTypeName.STRENGTH)
         );
         entity.setTrainingType(trainingType);
@@ -33,4 +37,3 @@ public class TrainerTestDataCreator {
         return trainerRepository.save(entity);
     }
 }
-

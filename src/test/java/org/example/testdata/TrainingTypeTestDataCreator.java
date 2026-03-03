@@ -13,6 +13,10 @@ public class TrainingTypeTestDataCreator {
 
     private final TrainingTypeRepository trainingTypeRepository;
 
+    public TrainingType givenTrainingTypeExists() {
+        return givenTrainingTypeExists(tt -> {});
+    }
+
     public TrainingType givenTrainingTypeExists(Consumer<TrainingType> config) {
         final var entity = new TrainingType();
 
@@ -23,4 +27,3 @@ public class TrainingTypeTestDataCreator {
         return trainingTypeRepository.save(entity);
     }
 }
-

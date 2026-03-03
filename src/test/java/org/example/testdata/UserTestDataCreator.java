@@ -14,6 +14,10 @@ public class UserTestDataCreator {
 
     private final UserRepository userRepository;
 
+    public User givenUserExists() {
+        return givenUserExists(u -> {});
+    }
+
     public User givenUserExists(Consumer<User> config) {
         final var entity = new User();
 
@@ -28,4 +32,3 @@ public class UserTestDataCreator {
         return userRepository.save(entity);
     }
 }
-

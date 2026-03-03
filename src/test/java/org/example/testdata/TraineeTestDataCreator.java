@@ -16,11 +16,15 @@ public class TraineeTestDataCreator {
     private final TraineeRepository traineeRepository;
     private final UserTestDataCreator userTestDataCreator;
 
+    public Trainee givenTraineeExists() {
+        return givenTraineeExists(t -> {});
+    }
+
     public Trainee givenTraineeExists(Consumer<Trainee> config) {
         final var entity = new Trainee();
 
         // Not-null fields
-        User user = userTestDataCreator.givenUserExists(u -> {});
+        final var user = userTestDataCreator.givenUserExists();
         entity.setUser(user);
 
         // Optional fields pre-populated for convenience
@@ -31,4 +35,3 @@ public class TraineeTestDataCreator {
         return traineeRepository.save(entity);
     }
 }
-
