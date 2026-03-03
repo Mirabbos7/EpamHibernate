@@ -1,26 +1,30 @@
 package org.example.facade;
 
-import org.example.config.TestConfig;
-import org.example.testdata.TraineeTestDataCreator;
-import org.example.testdata.TrainerTestDataCreator;
-import org.example.testdata.TrainingTestDataCreator;
-import org.example.testdata.TrainingTypeTestDataCreator;
+import org.example.AbstractSpringIntegrationTest;
+import org.example.service.AuthService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-@SpringJUnitConfig(TestConfig.class)
-@Transactional
-class GymFacadeIT {
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
 
-    @Autowired GymFacade gymFacade;
-    @Autowired TrainerTestDataCreator trainerTestDataCreator;
-    @Autowired TraineeTestDataCreator traineeTestDataCreator;
-    @Autowired TrainingTestDataCreator trainingTestDataCreator;
-    @Autowired TrainingTypeTestDataCreator trainingTypeTestDataCreator;
+
+class GymFacadeIT extends AbstractSpringIntegrationTest {
+
+    @Autowired
+    GymFacade gymFacade;
+    @MockitoSpyBean
+    AuthService authenticator;
+
+    @BeforeEach
+    void setUp() {
+        doNothing().when(authenticator).authenticate(anyString(), anyString(), any());
+    }
 
     // -------------------------------------------------------------------------
     // 1. Create Trainer profile
