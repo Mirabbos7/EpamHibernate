@@ -12,7 +12,8 @@ import java.util.Optional;
 @Repository
 public interface TrainerRepository extends JpaRepository<Trainer, Long> {
 
-    Optional<Trainer> findByUserUsername(String username);
+    @Query("select t from Trainer t join fetch t.user join fetch t.trainingType where t.user.username = :username")
+    Optional<Trainer> findByUserUsername(@Param("username") String username);
 
     @Query("SELECT COUNT(t) > 0 FROM Trainer t WHERE t.user.username = :username AND t.user.password = :password")
     boolean existsByUserUsernameAndUserPassword(@Param("username") String username,

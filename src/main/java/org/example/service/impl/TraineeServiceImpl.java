@@ -9,6 +9,7 @@ import org.example.entity.TrainingType;
 import org.example.repository.TraineeRepository;
 import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingRepository;
+import org.example.service.AuthService;
 import org.example.service.TraineeService;
 import org.example.service.UserService;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainerRepository trainerRepository;
     private final TrainingRepository trainingRepository;
     private final UserService userService;
+    private final AuthService authService;
 
     @Transactional
     @Override
@@ -48,14 +50,14 @@ public class TraineeServiceImpl implements TraineeService {
     @Transactional(readOnly = true)
     @Override
     public Optional<Trainee> findByUsername(String username, String password) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         return traineeRepository.findByUserUsername(username);
     }
 
     @Transactional
     @Override
     public void changePassword(String username, String oldPassword, String newPassword) {
-        authenticate(username, oldPassword);
+        authService.authenticate(username, oldPassword, this::matchUsernameAndPassword);
         Trainee trainee = getOrThrow(username);
         trainee.getUser().setPassword(newPassword);
         traineeRepository.save(trainee);
@@ -65,7 +67,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Transactional
     @Override
     public Trainee update(String username, String password, Date dateOfBirth, String address, boolean isActive) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         Trainee trainee = getOrThrow(username);
         trainee.setDateOfBirth(dateOfBirth);
         trainee.setAddress(address);
@@ -76,7 +78,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Transactional
     @Override
     public void setActive(String username, String password, boolean active) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         Trainee trainee = getOrThrow(username);
         if (trainee.getUser().isActive() == active) {
             throw new IllegalStateException("Already " + (active ? "active" : "inactive"));
@@ -88,7 +90,7 @@ public class TraineeServiceImpl implements TraineeService {
     @Transactional
     @Override
     public void delete(String username, String password) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         traineeRepository.delete(getOrThrow(username));
         log.info("Deleted trainee: {}", username);
     }
@@ -98,21 +100,21 @@ public class TraineeServiceImpl implements TraineeService {
     public List<Training> getTrainings(String username, String password,
                                        Date fromDate, Date toDate,
                                        String trainerName, TrainingType.TrainingTypeName typeName) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         return trainingRepository.findByTraineeUserUsername(username);
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<Trainer> getUnassignedTrainers(String username, String password) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         return trainerRepository.findTrainersNotAssignedToTrainee(username);
     }
 
     @Transactional
     @Override
     public Trainee updateTrainers(String username, String password, List<String> trainerUsernames) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         Trainee trainee = getOrThrow(username);
         List<Trainer> trainers = trainerUsernames.stream()
                 .map(u -> trainerRepository.findByUserUsername(u)
@@ -122,11 +124,6 @@ public class TraineeServiceImpl implements TraineeService {
         return traineeRepository.save(trainee);
     }
 
-    private void authenticate(String username, String password) {
-        if (!matchUsernameAndPassword(username, password)) {
-            throw new SecurityException("Invalid credentials: " + username);
-        }
-    }
 
     private Trainee getOrThrow(String username) {
         return traineeRepository.findByUserUsername(username)

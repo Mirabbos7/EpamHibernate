@@ -56,7 +56,7 @@ public class TrainingServiceImpl implements TrainingService {
         training.setName(name);
         training.setTrainingType(trainingType);
         training.setDate(date);
-        training.setNumber(durationMinutes);
+        training.setDurationInMinutes(durationMinutes);
 
         log.info("Creating training '{}' for trainee: {}, trainer: {}", name, traineeUsername, trainerUsername);
         return trainingRepository.save(training);

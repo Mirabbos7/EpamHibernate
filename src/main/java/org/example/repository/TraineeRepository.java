@@ -11,7 +11,8 @@ import java.util.Optional;
 @Repository
 public interface TraineeRepository extends JpaRepository<Trainee, Long> {
 
-    Optional<Trainee> findByUserUsername(String username);
+    @Query("select t from Trainee t join fetch t.user where t.user.username = :username")
+    Optional<Trainee> findByUserUsername(@Param("username") String username);
 
     @Query("SELECT COUNT(t) > 0 FROM Trainee t WHERE t.user.username = :username AND t.user.password = :password")
     boolean existsByUserUsernameAndUserPassword(@Param("username") String username,

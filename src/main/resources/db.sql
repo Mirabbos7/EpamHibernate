@@ -37,7 +37,7 @@ CREATE TABLE epam.training
     name          VARCHAR NOT NULL,
     training_type BIGINT  NOT NULL REFERENCES epam.training_type (id),
     date          DATE    NOT NULL,
-    number        INTEGER NOT NULL
+    duration_in_minutes        INTEGER NOT NULL
 );
 
 CREATE TABLE epam.trainee_trainer

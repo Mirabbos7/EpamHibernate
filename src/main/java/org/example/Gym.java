@@ -95,7 +95,7 @@ public class Gym {
         System.out.println("\n===== GET TRAINING BY ID =====");
         Optional<Training> fetchedTraining = facade.getTraining(training.getId());
         fetchedTraining.ifPresent(t -> System.out.println("Fetched training: "
-                + t.getName() + ", duration: " + t.getNumber() + " min"));
+                + t.getName() + ", duration: " + t.getDurationInMinutes() + " min"));
 
         System.out.println("\n===== GET TRAINEE TRAININGS =====");
         List<Training> traineeTrainings = facade.getTraineeTrainings(
