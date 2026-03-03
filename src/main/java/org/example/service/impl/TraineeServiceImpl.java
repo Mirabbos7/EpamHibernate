@@ -108,7 +108,8 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public List<Trainer> getUnassignedTrainers(String username, String password) {
         authService.authenticate(username, password, this::matchUsernameAndPassword);
-        return trainerRepository.findTrainersNotAssignedToTrainee(username);
+        Trainee trainee = getOrThrow(username);
+        return trainerRepository.findByTraineesNotContaining(trainee);
     }
 
     @Transactional

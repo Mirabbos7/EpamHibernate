@@ -66,7 +66,7 @@ class TrainingServiceImplTest {
                 TrainingType.TrainingTypeName.CARDIO, new Date(), 60);
 
         assertThat(result.getName()).isEqualTo("Morning Run");
-        assertThat(result.getNumber()).isEqualTo(60);
+        assertThat(result.getDurationInMinutes()).isEqualTo(60);
         assertThat(result.getTrainee()).isEqualTo(trainee);
         assertThat(result.getTrainer()).isEqualTo(trainer);
         verify(trainingRepository).save(any());
