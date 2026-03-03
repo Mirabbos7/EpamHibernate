@@ -1,7 +1,6 @@
 package org.example.facade;
 
 import org.example.AbstractSpringIntegrationTest;
-import org.example.entity.TrainingType;
 import org.example.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.example.entity.TrainingType.TrainingTypeName.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -35,9 +35,9 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
     @Test
     @DisplayName("1. Should create a Trainer profile and persist it with generated username and password")
     void shouldCreateTrainerProfile() {
-        trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(TrainingType.TrainingTypeName.CARDIO));
+        trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(CARDIO));
 
-        final var trainer = gymFacade.createTrainer("Alice", "Smith", TrainingType.TrainingTypeName.CARDIO);
+        final var trainer = gymFacade.createTrainer("Alice", "Smith", CARDIO);
 
         assertThat(trainer.getId()).isNotNull();
         assertThat(trainer.getUser().getUsername()).isNotBlank();
@@ -222,11 +222,11 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
             final var trainer = trainerCreator.givenTrainerExists();
             final var username = trainer.getUser().getUsername();
             final var password = trainer.getUser().getPassword();
-            trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(TrainingType.TrainingTypeName.FLEXIBILITY));
+            trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(FLEXIBILITY));
 
-            final var updated = gymFacade.updateTrainer(username, password, TrainingType.TrainingTypeName.FLEXIBILITY, false);
+            final var updated = gymFacade.updateTrainer(username, password, FLEXIBILITY, false);
 
-            assertThat(updated.getTrainingType().getTrainingTypeName()).isEqualTo(TrainingType.TrainingTypeName.FLEXIBILITY);
+            assertThat(updated.getTrainingType().getTrainingTypeName()).isEqualTo(FLEXIBILITY);
             assertThat(updated.getUser().isActive()).isFalse();
         }
     }
@@ -381,13 +381,14 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
             final var username = trainee.getUser().getUsername();
             final var password = trainee.getUser().getPassword();
 
-            final var trainings = gymFacade.getTraineeTrainings(username, password, null, null, null, null);
+            final var trainings = gymFacade.getTraineeTrainings(username, password, null, null,
+                    null, null);
 
             assertThat(trainings).hasSize(2);
         }
 
         @Test
-        @DisplayName("Should return trainings filtered by from-date and to-date")
+        @DisplayName("Should return trainings between dates")
         void shouldFilterTraineeTrainingsByDateRange() {
             final var trainee = traineeCreator.givenTraineeExists();
             final var trainer = trainerCreator.givenTrainerExists();
@@ -406,7 +407,13 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
             final var username = trainee.getUser().getUsername();
             final var password = trainee.getUser().getPassword();
 
-            final var trainings = gymFacade.getTraineeTrainings(username, password, null, null, null, null);
+            final var trainings = gymFacade.getTraineeTrainings(
+                    username,
+                    password,
+                    new Date(past.getTime() - 1000L), // just before the past training
+                    new Date(recent.getTime() + 1000L), // just after the recent training
+                    null,
+                    null);
 
             assertThat(trainings).hasSize(2);
         }
@@ -424,7 +431,8 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
             final var password = trainee.getUser().getPassword();
             final var trainerUsername = trainer.getUser().getUsername();
 
-            final var trainings = gymFacade.getTraineeTrainings(username, password, null, null, trainerUsername, null);
+            final var trainings = gymFacade.getTraineeTrainings(username, password, null, null,
+                    trainerUsername, null);
 
             assertThat(trainings).isNotEmpty();
         }
@@ -434,26 +442,66 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
         void shouldFilterTraineeTrainingsByTrainingType() {
             final var trainee = traineeCreator.givenTraineeExists();
             final var trainer = trainerCreator.givenTrainerExists();
+            final var trainingType = trainingTypeCreator.givenTrainingTypeExists(
+                    t -> t.setTrainingTypeName(STRENGTH)
+            );
             trainingCreator.givenTrainingExists(t -> {
                 t.setTrainee(trainee);
                 t.setTrainer(trainer);
+                t.setTrainingType(trainingType);
             });
+
             final var username = trainee.getUser().getUsername();
             final var password = trainee.getUser().getPassword();
 
-            final var trainings = gymFacade.getTraineeTrainings(username, password, null, null, null, TrainingType.TrainingTypeName.CARDIO);
+            final var trainings = gymFacade.getTraineeTrainings(username, password, null, null,
+                    null, STRENGTH);
 
             assertThat(trainings).isNotEmpty();
         }
 
         @Test
-        @DisplayName("Should return empty list when no trainings match the given criteria")
+        @DisplayName("Should return empty list when no trainings match the given type")
         void shouldReturnEmptyListWhenNoTraineeTrainingsMatchCriteria() {
             final var trainee = traineeCreator.givenTraineeExists();
+            final var trainer = trainerCreator.givenTrainerExists();
+            final var trainingType = trainingTypeCreator.givenTrainingTypeExists(
+                    t -> t.setTrainingTypeName(STRENGTH)
+            );
+            trainingCreator.givenTrainingExists(t -> {
+                t.setTrainee(trainee);
+                t.setTrainer(trainer);
+                t.setTrainingType(trainingType);
+            });
             final var username = trainee.getUser().getUsername();
             final var password = trainee.getUser().getPassword();
 
-            final var trainings = gymFacade.getTraineeTrainings(username, password, null, null, null, null);
+            final var trainings = gymFacade.getTraineeTrainings(username, password, null, null,
+                    null, CARDIO);
+
+            assertThat(trainings).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should return empty list when no trainings match the given date range")
+        void shouldReturnEmptyListWhenNoTraineeTrainingsMatchDateRange() {
+            final var trainee = traineeCreator.givenTraineeExists();
+            final var trainer = trainerCreator.givenTrainerExists();
+            trainingCreator.givenTrainingExists(t -> {
+                t.setTrainee(trainee);
+                t.setTrainer(trainer);
+                t.setDate(new Date(1000L));
+            });
+            final var username = trainee.getUser().getUsername();
+            final var password = trainee.getUser().getPassword();
+
+            final var trainings = gymFacade.getTraineeTrainings(
+                    username,
+                    password,
+                    new Date(2000L), // after the training date
+                    new Date(3000L), // after the training date
+                    null,
+                    null);
 
             assertThat(trainings).isEmpty();
         }
@@ -547,12 +595,12 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
         void shouldAddTrainingSuccessfully() {
             final var trainee = traineeCreator.givenTraineeExists();
             final var trainer = trainerCreator.givenTrainerExists();
-            trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(TrainingType.TrainingTypeName.BALANCE));
+            trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(BALANCE));
             final var traineeUsername = trainee.getUser().getUsername();
             final var trainerUsername = trainer.getUser().getUsername();
 
             final var training = gymFacade.createTraining(traineeUsername, trainerUsername,
-                    "Morning Session", TrainingType.TrainingTypeName.BALANCE, new Date(), 45);
+                    "Morning Session", BALANCE, new Date(), 45);
 
             assertThat(training.getId()).isNotNull();
             assertThat(training.getTrainee().getUser().getUsername()).isEqualTo(traineeUsername);
@@ -563,10 +611,10 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
         @DisplayName("Should throw exception when trainee username does not exist")
         void shouldThrowWhenTraineeNotFoundForTraining() {
             final var trainer = trainerCreator.givenTrainerExists();
-            trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(TrainingType.TrainingTypeName.BALANCE));
+            trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(BALANCE));
 
             assertThatThrownBy(() -> gymFacade.createTraining("no.such.trainee",
-                    trainer.getUser().getUsername(), "Session", TrainingType.TrainingTypeName.BALANCE, new Date(), 30))
+                    trainer.getUser().getUsername(), "Session", BALANCE, new Date(), 30))
                     .isInstanceOf(IllegalArgumentException.class);
         }
 
@@ -574,10 +622,10 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
         @DisplayName("Should throw exception when trainer username does not exist")
         void shouldThrowWhenTrainerNotFoundForTraining() {
             final var trainee = traineeCreator.givenTraineeExists();
-            trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(TrainingType.TrainingTypeName.BALANCE));
+            trainingTypeCreator.givenTrainingTypeExists(tt -> tt.setTrainingTypeName(BALANCE));
 
             assertThatThrownBy(() -> gymFacade.createTraining(trainee.getUser().getUsername(),
-                    "no.such.trainer", "Session", TrainingType.TrainingTypeName.BALANCE, new Date(), 30))
+                    "no.such.trainer", "Session", BALANCE, new Date(), 30))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
