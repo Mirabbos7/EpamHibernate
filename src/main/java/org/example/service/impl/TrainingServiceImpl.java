@@ -30,10 +30,6 @@ public class TrainingServiceImpl implements TrainingService {
     @Transactional
     @Override
 
-    // TODO:
-    //  [Optional]
-    //  You current solution works, alternatively we can wrap arguments into a DTO and validate it using Bean Validation API
-    //  It will be a nice separation of concerns and will allow us to reuse the same DTO in controller layer later
     public Training create(String traineeUsername, String trainerUsername,
                            String name, TrainingType.TrainingTypeName typeName,
                            Date date, int durationMinutes) {
