@@ -1,8 +1,7 @@
 package org.example.testdata;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.example.entity.Trainee;
-import org.example.entity.Trainer;
 import org.example.entity.Training;
 import org.example.entity.TrainingType;
 import org.example.repository.TrainingRepository;
@@ -16,6 +15,7 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class TrainingTestDataCreator {
 
+    @Getter
     private final TrainingRepository trainingRepository;
     private final TrainerTestDataCreator trainerTestDataCreator;
     private final TraineeTestDataCreator traineeTestDataCreator;

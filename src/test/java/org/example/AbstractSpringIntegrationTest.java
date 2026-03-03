@@ -1,6 +1,7 @@
 package org.example;
 
 
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import org.example.facade.GymFacade;
 import org.example.testdata.TraineeTestDataCreator;
@@ -28,10 +29,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.util.Properties;
+import java.util.function.Supplier;
 
-@SpringJUnitConfig(AbstractSpringIntegrationTest.TestConfig.class)
 @Transactional
 @Rollback
+@SpringJUnitConfig(AbstractSpringIntegrationTest.TestConfig.class)
 public abstract class AbstractSpringIntegrationTest {
 
     @Autowired
@@ -42,6 +44,21 @@ public abstract class AbstractSpringIntegrationTest {
     protected TrainingTestDataCreator trainingCreator;
     @Autowired
     protected TrainingTypeTestDataCreator trainingTypeCreator;
+    @Autowired
+    protected EntityManager entityManager;
+
+    protected <T> T withDbSync(Supplier<T> action) {
+        final var result = action.get();
+        entityManager.flush();
+        entityManager.clear();
+        return result;
+    }
+
+    protected void withDbSync(Runnable action) {
+        action.run();
+        entityManager.flush();
+        entityManager.clear();
+    }
 
     @Configuration
     @PropertySource("classpath:application-test.properties")

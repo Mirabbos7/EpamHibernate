@@ -20,7 +20,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 
-
 class GymFacadeIT extends AbstractSpringIntegrationTest {
 
     @Autowired
@@ -332,6 +331,33 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
             gymFacade.deleteTrainee(username, password);
 
             assertThat(gymFacade.getTrainee(username, password)).isEmpty();
+            assertThat(traineeCreator.getTraineeRepository().findById(trainee.getId())).isEmpty();
+
+        }
+
+        @Test
+        @DisplayName("Should cascade delete all trainee's trainings when trainee is deleted")
+        void shouldCascadeDeleteTraineeTrainings() {
+            final var trainee = withDbSync(() -> {
+                final var it = traineeCreator.givenTraineeExists();
+                final var trainer = trainerCreator.givenTrainerExists();
+                trainingCreator.givenTrainingExists(t -> {
+                    t.setTrainee(it);
+                    t.setTrainer(trainer);
+                });
+                trainingCreator.givenTrainingExists(t -> {
+                    t.setTrainee(it);
+                    t.setTrainer(trainer);
+                });
+                return it;
+            });
+
+            final var username = trainee.getUser().getUsername();
+            final var password = trainee.getUser().getPassword();
+            withDbSync(() -> gymFacade.deleteTrainee(username, password));
+
+            assertThat(traineeCreator.getTraineeRepository().findById(trainee.getId())).isEmpty();
+            assertThat(trainingCreator.getTrainingRepository().findAll()).isEmpty();
         }
     }
 

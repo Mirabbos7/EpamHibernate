@@ -1,8 +1,8 @@
 package org.example.testdata;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.example.entity.Trainee;
-import org.example.entity.User;
 import org.example.repository.TraineeRepository;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class TraineeTestDataCreator {
 
+    @Getter
     private final TraineeRepository traineeRepository;
     private final UserTestDataCreator userTestDataCreator;
 
