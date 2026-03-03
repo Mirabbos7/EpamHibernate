@@ -11,31 +11,24 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@EqualsAndHashCode
-public class Training {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Training extends BaseEntity{
 
     @Column(nullable = false)
     private String name;
     @Column(nullable = false)
     private Date date;
     @Column(nullable = false)
-    // TODO:
-    //  It would be better to have a more descriptive name like 'durationInMinutes' or 'duration' + your comment.
-    private int number; //in minutes
+    private int durationInMinutes;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trainer_id")
     private Trainer trainer;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trainee_id")
     private Trainee trainee;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "training_type")
     private TrainingType trainingType;
 }

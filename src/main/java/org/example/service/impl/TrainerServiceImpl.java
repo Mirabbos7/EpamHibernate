@@ -8,6 +8,7 @@ import org.example.entity.TrainingType;
 import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingRepository;
 import org.example.repository.TrainingTypeRepository;
+import org.example.service.AuthService;
 import org.example.service.TrainerService;
 import org.example.service.UserService;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class TrainerServiceImpl implements TrainerService {
     private final TrainingRepository trainingRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final UserService userService;
+    private final AuthService authService;
 
     @Transactional
     @Override
@@ -47,14 +49,14 @@ public class TrainerServiceImpl implements TrainerService {
     @Transactional(readOnly = true)
     @Override
     public Optional<Trainer> findByUsername(String username, String password) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         return trainerRepository.findByUserUsername(username);
     }
 
     @Transactional
     @Override
     public void changePassword(String username, String oldPassword, String newPassword) {
-        authenticate(username, oldPassword);
+        authService.authenticate(username, oldPassword, this::matchUsernameAndPassword);
         Trainer trainer = getOrThrow(username);
         trainer.getUser().setPassword(newPassword);
         trainerRepository.save(trainer);
@@ -65,7 +67,7 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public Trainer update(String username, String password,
                           TrainingType.TrainingTypeName specialization, boolean isActive) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         Trainer trainer = getOrThrow(username);
         TrainingType type = trainingTypeRepository.findByTrainingTypeName(specialization)
                 .orElseThrow(() -> new IllegalArgumentException("TrainingType not found: " + specialization));
@@ -77,7 +79,7 @@ public class TrainerServiceImpl implements TrainerService {
     @Transactional
     @Override
     public void setActive(String username, String password, boolean active) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
         Trainer trainer = getOrThrow(username);
         if (trainer.getUser().isActive() == active) {
             throw new IllegalStateException("Already " + (active ? "active" : "inactive"));
@@ -90,23 +92,11 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public List<Training> getTrainings(String username, String password,
                                        Date fromDate, Date toDate, String traineeName) {
-        authenticate(username, password);
+        authService.authenticate(username, password, this::matchUsernameAndPassword );
         return trainingRepository.findByTrainerUserUsername(username);
     }
 
-    // TODO:
-    //  1) Extract duplicated authentication method in TraineeServiceImpl and TrainerServiceImpl
-    //  2) [Optional]
-    //  As stated by the task certain methods require authentication before they can be executed.
-    //  What if we could mark such methods somehow and have the authentication logic automatically applied
-    //  before the method body is even reached?
-    //  Note: (2) is purely for experimenting & learning purposes it will become NOT relevant later in course.
-    //  Yet if you want to give it a try, Custom annotation + Spring AOP can do the trick
-    private void authenticate(String username, String password) {
-        if (!matchUsernameAndPassword(username, password)) {
-            throw new SecurityException("Invalid credentials: " + username);
-        }
-    }
+
 
     private Trainer getOrThrow(String username) {
         return trainerRepository.findByUserUsername(username)
