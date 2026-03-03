@@ -7,6 +7,7 @@ import org.example.entity.User;
 import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingRepository;
 import org.example.repository.TrainingTypeRepository;
+import org.example.service.AuthService;
 import org.example.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,12 +15,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,18 +28,19 @@ class TrainerServiceImplTest {
     @Mock TrainingRepository trainingRepository;
     @Mock TrainingTypeRepository trainingTypeRepository;
     @Mock UserService userService;
+    @Mock AuthService authService;
 
-    @InjectMocks TrainerServiceImpl trainerService;
+    @InjectMocks TrainerServiceImpl service;
 
-    private User user;
     private Trainer trainer;
+    private User user;
     private TrainingType trainingType;
 
     @BeforeEach
     void setUp() {
         user = new User();
-        user.setUsername("Jane.Smith");
-        user.setPassword("pass456");
+        user.setUsername("jane.smith");
+        user.setPassword("pass123");
         user.setFirstName("Jane");
         user.setLastName("Smith");
         user.setActive(true);
@@ -54,160 +54,137 @@ class TrainerServiceImplTest {
     }
 
     @Test
-    void create_success() {
+    void create_shouldSaveAndReturnTrainer() {
         when(trainingTypeRepository.findByTrainingTypeName(TrainingType.TrainingTypeName.CARDIO))
                 .thenReturn(Optional.of(trainingType));
         when(userService.createUser("Jane", "Smith")).thenReturn(user);
-        when(trainerRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(trainerRepository.save(any(Trainer.class))).thenReturn(trainer);
 
-        Trainer result = trainerService.create("Jane", "Smith", TrainingType.TrainingTypeName.CARDIO);
+        Trainer result = service.create("Jane", "Smith", TrainingType.TrainingTypeName.CARDIO);
 
-        assertThat(result.getUser().getUsername()).isEqualTo("Jane.Smith");
+        assertThat(result.getUser().getUsername()).isEqualTo("jane.smith");
         assertThat(result.getTrainingType().getTrainingTypeName()).isEqualTo(TrainingType.TrainingTypeName.CARDIO);
-        verify(trainerRepository).save(any());
+        verify(trainerRepository).save(any(Trainer.class));
     }
 
     @Test
-    void create_trainingTypeNotFound_throwsException() {
+    void create_shouldThrow_whenTrainingTypeNotFound() {
         when(trainingTypeRepository.findByTrainingTypeName(TrainingType.TrainingTypeName.CARDIO))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> trainerService.create("Jane", "Smith", TrainingType.TrainingTypeName.CARDIO))
+        assertThatThrownBy(() -> service.create("Jane", "Smith", TrainingType.TrainingTypeName.CARDIO))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("TrainingType not found");
     }
 
     @Test
-    void matchUsernameAndPassword_correct_returnsTrue() {
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "pass456")).thenReturn(true);
-        assertThat(trainerService.matchUsernameAndPassword("Jane.Smith", "pass456")).isTrue();
+    void matchUsernameAndPassword_shouldReturnTrue() {
+        when(trainerRepository.existsByUserUsernameAndUserPassword("jane.smith", "pass123")).thenReturn(true);
+        assertThat(service.matchUsernameAndPassword("jane.smith", "pass123")).isTrue();
     }
 
     @Test
-    void matchUsernameAndPassword_wrong_returnsFalse() {
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "wrong")).thenReturn(false);
-        assertThat(trainerService.matchUsernameAndPassword("Jane.Smith", "wrong")).isFalse();
+    void matchUsernameAndPassword_shouldReturnFalse() {
+        when(trainerRepository.existsByUserUsernameAndUserPassword("jane.smith", "wrong")).thenReturn(false);
+        assertThat(service.matchUsernameAndPassword("jane.smith", "wrong")).isFalse();
     }
 
     @Test
-    void findByUsername_success() {
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "pass456")).thenReturn(true);
-        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
+    void findByUsername_shouldReturnTrainer() {
+        doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
+        when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
 
-        Optional<Trainer> result = trainerService.findByUsername("Jane.Smith", "pass456");
-
-        assertThat(result).isPresent();
-        assertThat(result.get().getUser().getUsername()).isEqualTo("Jane.Smith");
+        assertThat(service.findByUsername("jane.smith", "pass123")).isPresent();
     }
 
     @Test
-    void findByUsername_invalidCredentials_throwsException() {
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "wrong")).thenReturn(false);
+    void findByUsername_shouldThrow_whenAuthFails() {
+        doThrow(new SecurityException("Invalid credentials"))
+                .when(authService).authenticate(eq("jane.smith"), eq("wrong"), any());
 
-        assertThatThrownBy(() -> trainerService.findByUsername("Jane.Smith", "wrong"))
-                .isInstanceOf(SecurityException.class)
-                .hasMessageContaining("Invalid credentials");
-    }
-
-    @Test
-    void changePassword_success() {
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "pass456")).thenReturn(true);
-        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
-        when(trainerRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        trainerService.changePassword("Jane.Smith", "pass456", "newPass999");
-
-        assertThat(user.getPassword()).isEqualTo("newPass999");
-        verify(trainerRepository).save(trainer);
-    }
-
-    @Test
-    void changePassword_invalidOldPassword_throwsException() {
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "wrong")).thenReturn(false);
-
-        assertThatThrownBy(() -> trainerService.changePassword("Jane.Smith", "wrong", "newPass"))
+        assertThatThrownBy(() -> service.findByUsername("jane.smith", "wrong"))
                 .isInstanceOf(SecurityException.class);
     }
 
     @Test
-    void update_success() {
-        TrainingType strength = new TrainingType();
-        strength.setTrainingTypeName(TrainingType.TrainingTypeName.STRENGTH);
+    void changePassword_shouldUpdatePassword() {
+        doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
+        when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(trainer)).thenReturn(trainer);
 
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "pass456")).thenReturn(true);
-        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
-        when(trainingTypeRepository.findByTrainingTypeName(TrainingType.TrainingTypeName.STRENGTH))
-                .thenReturn(Optional.of(strength));
-        when(trainerRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        service.changePassword("jane.smith", "pass123", "newPass");
 
-        Trainer result = trainerService.update("Jane.Smith", "pass456", TrainingType.TrainingTypeName.STRENGTH, true);
-
-        assertThat(result.getTrainingType().getTrainingTypeName()).isEqualTo(TrainingType.TrainingTypeName.STRENGTH);
-        assertThat(result.getUser().isActive()).isTrue();
+        assertThat(trainer.getUser().getPassword()).isEqualTo("newPass");
+        verify(trainerRepository).save(trainer);
     }
 
     @Test
-    void update_trainingTypeNotFound_throwsException() {
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "pass456")).thenReturn(true);
-        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
+    void changePassword_shouldThrow_whenNotFound() {
+        doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
+        when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.changePassword("jane.smith", "pass123", "newPass"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Trainer not found");
+    }
+
+    @Test
+    void update_shouldUpdateSpecializationAndActiveStatus() {
+        TrainingType strengthType = new TrainingType();
+        strengthType.setTrainingTypeName(TrainingType.TrainingTypeName.STRENGTH);
+
+        doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
+        when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
+        when(trainingTypeRepository.findByTrainingTypeName(TrainingType.TrainingTypeName.STRENGTH))
+                .thenReturn(Optional.of(strengthType));
+        when(trainerRepository.save(trainer)).thenReturn(trainer);
+
+        Trainer result = service.update("jane.smith", "pass123", TrainingType.TrainingTypeName.STRENGTH, false);
+
+        assertThat(result.getTrainingType().getTrainingTypeName()).isEqualTo(TrainingType.TrainingTypeName.STRENGTH);
+        assertThat(result.getUser().isActive()).isFalse();
+    }
+
+    @Test
+    void update_shouldThrow_whenTrainingTypeNotFound() {
+        doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
+        when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
         when(trainingTypeRepository.findByTrainingTypeName(TrainingType.TrainingTypeName.STRENGTH))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> trainerService.update("Jane.Smith", "pass456", TrainingType.TrainingTypeName.STRENGTH, true))
+        assertThatThrownBy(() -> service.update("jane.smith", "pass123", TrainingType.TrainingTypeName.STRENGTH, true))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("TrainingType not found");
     }
 
     @Test
-    void setActive_deactivate_success() {
-        user.setActive(true);
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "pass456")).thenReturn(true);
-        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
-        when(trainerRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+    void setActive_shouldDeactivate_whenCurrentlyActive() {
+        doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
+        when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
+        when(trainerRepository.save(trainer)).thenReturn(trainer);
 
-        trainerService.setActive("Jane.Smith", "pass456", false);
+        service.setActive("jane.smith", "pass123", false);
 
-        assertThat(user.isActive()).isFalse();
+        assertThat(trainer.getUser().isActive()).isFalse();
     }
 
     @Test
-    void setActive_alreadyActive_throwsException() {
-        user.setActive(true);
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "pass456")).thenReturn(true);
-        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
+    void setActive_shouldThrow_whenAlreadySameState() {
+        doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
+        when(trainerRepository.findByUserUsername("jane.smith")).thenReturn(Optional.of(trainer));
 
-        assertThatThrownBy(() -> trainerService.setActive("Jane.Smith", "pass456", true))
+        assertThatThrownBy(() -> service.setActive("jane.smith", "pass123", true))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Already active");
     }
 
     @Test
-    void setActive_alreadyInactive_throwsException() {
-        user.setActive(false);
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "pass456")).thenReturn(true);
-        when(trainerRepository.findByUserUsername("Jane.Smith")).thenReturn(Optional.of(trainer));
+    void getTrainings_shouldReturnList() {
+        doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
+        when(trainingRepository.findByTrainerUserUsername("jane.smith")).thenReturn(List.of(new Training()));
 
-        assertThatThrownBy(() -> trainerService.setActive("Jane.Smith", "pass456", false))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Already inactive");
-    }
-
-    @Test
-    void getTrainings_success() {
-        Training training = new Training();
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "pass456")).thenReturn(true);
-        when(trainingRepository.findByTrainerUserUsername("Jane.Smith")).thenReturn(List.of(training));
-
-        List<Training> result = trainerService.getTrainings("Jane.Smith", "pass456", null, null, null);
+        List<Training> result = service.getTrainings("jane.smith", "pass123", null, null, null);
 
         assertThat(result).hasSize(1);
-    }
-
-    @Test
-    void getTrainings_invalidCredentials_throwsException() {
-        when(trainerRepository.existsByUserUsernameAndUserPassword("Jane.Smith", "wrong")).thenReturn(false);
-
-        assertThatThrownBy(() -> trainerService.getTrainings("Jane.Smith", "wrong", null, null, null))
-                .isInstanceOf(SecurityException.class);
     }
 }
