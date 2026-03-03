@@ -4,6 +4,7 @@ import org.example.entity.Training;
 import org.example.entity.TrainingType;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 public interface TrainingService {
@@ -13,4 +14,9 @@ public interface TrainingService {
                     Date date, int durationMinutes);
 
     Optional<Training> select(Long id);
+
+    List<Training> getTraineeTrainings(String traineeUsername,
+                                       Date fromDate,
+                                       Date toDate,
+                                       TrainingType.TrainingTypeName typeName);
 }

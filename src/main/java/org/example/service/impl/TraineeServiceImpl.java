@@ -99,9 +99,22 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public List<Training> getTrainings(String username, String password,
                                        Date fromDate, Date toDate,
-                                       String trainerName, TrainingType.TrainingTypeName typeName) {
+                                       String trainerName,
+                                       TrainingType.TrainingTypeName typeName) {
+
         authService.authenticate(username, password, this::matchUsernameAndPassword);
-        return trainingRepository.findByTraineeUserUsername(username);
+
+        List<Training> trainings =
+                trainingRepository.findByTraineeUserUsername(username);
+
+        return trainings.stream()
+                .filter(t -> fromDate == null || !t.getDate().before(fromDate))
+                .filter(t -> toDate == null || !t.getDate().after(toDate))
+                .filter(t -> trainerName == null ||
+                        t.getTrainer().getUser().getUsername().equals(trainerName))
+                .filter(t -> typeName == null ||
+                        t.getTrainingType().getTrainingTypeName().equals(typeName))
+                .toList();
     }
 
     @Transactional(readOnly = true)

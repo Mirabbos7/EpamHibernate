@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -65,13 +66,29 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Transactional(readOnly = true)
     @Override
-    // TODO:
-    //  [Optional]
-    //  Let's decide at which stage we become certain that the entity is found/not found
-    //  Is it at the service layer or in facade?
-    //  The Optional<T> chain should eventually end with a T or an exception
     public Optional<Training> select(Long id) {
         return trainingRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<Training> getTraineeTrainings(
+            String traineeUsername,
+            Date fromDate,
+            Date toDate,
+            TrainingType.TrainingTypeName typeName) {
+
+        validateNotBlank(traineeUsername, "Trainee username");
+
+        List<Training> trainings =
+                trainingRepository.findByTraineeUserUsername(traineeUsername);
+
+        return trainings.stream()
+                .filter(t -> fromDate == null || !t.getDate().before(fromDate))
+                .filter(t -> toDate == null || !t.getDate().after(toDate))
+                .filter(t -> typeName == null ||
+                        t.getTrainingType().getTrainingTypeName().equals(typeName))
+                .toList();
     }
 
     private void validateNotBlank(String value, String fieldName) {
