@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -24,13 +25,19 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class TrainerServiceImplTest {
 
-    @Mock TrainerRepository trainerRepository;
-    @Mock TrainingRepository trainingRepository;
-    @Mock TrainingTypeRepository trainingTypeRepository;
-    @Mock UserService userService;
-    @Mock AuthService authService;
+    @Mock
+    TrainerRepository trainerRepository;
+    @Mock
+    TrainingRepository trainingRepository;
+    @Mock
+    TrainingTypeRepository trainingTypeRepository;
+    @Mock
+    UserService userService;
+    @Mock
+    AuthService authService;
 
-    @InjectMocks TrainerServiceImpl service;
+    @InjectMocks
+    TrainerServiceImpl service;
 
     private Trainer trainer;
     private User user;
@@ -181,7 +188,9 @@ class TrainerServiceImplTest {
     @Test
     void getTrainings_shouldReturnList() {
         doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
-        when(trainingRepository.findByTrainerUserUsername("jane.smith")).thenReturn(List.of(new Training()));
+        when(trainingRepository.findByTrainerUsernameAndTraineeUsernameAndDateBetween(
+                eq("jane.smith"), any(), any(), any()
+        )).thenReturn(List.of(new Training()));
 
         List<Training> result = service.getTrainings("jane.smith", "pass123", null, null, null);
 
