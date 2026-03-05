@@ -92,10 +92,11 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public List<Training> getTrainings(String username, String password,
                                        Date fromDate, Date toDate, String traineeName) {
-        authService.authenticate(username, password, this::matchUsernameAndPassword );
-        return trainingRepository.findByTrainerUserUsername(username);
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
+        return trainingRepository.findByTrainerUsernameAndTraineeUsernameAndDateBetween(
+                username, traineeName, fromDate, toDate
+        );
     }
-
 
 
     private Trainer getOrThrow(String username) {
