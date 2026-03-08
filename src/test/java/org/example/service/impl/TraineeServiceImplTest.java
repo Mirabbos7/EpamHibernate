@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Date;
 import java.util.List;
@@ -163,7 +164,7 @@ class TraineeServiceImplTest {
     @Test
     void getTrainings_shouldReturnList() {
         doNothing().when(authService).authenticate(eq("john.doe"), eq("pass123"), any());
-        when(trainingRepository.findByTraineeUserUsername("john.doe")).thenReturn(List.of(new Training()));
+        when(trainingRepository.findAll(any(Specification.class))).thenReturn(List.of(new Training()));
 
         assertThat(service.getTrainings("john.doe", "pass123", null, null, null, null)).hasSize(1);
     }

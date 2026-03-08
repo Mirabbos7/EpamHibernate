@@ -113,6 +113,11 @@ public class Gym {
         facade.setTraineeActive(traineeUsername, traineePassword, true);
         System.out.println("Trainee reactivated");
 
+        List<Training> nextWeekTrainings = facade.getTrainingsForTraineesNextWeek(
+                List.of(trainee.getId())
+        );
+        System.out.println("Next week trainings count: " + nextWeekTrainings.size());
+
         System.out.println("\n===== DELETE TRAINEE =====");
         facade.deleteTrainee(traineeUsername, traineePassword);
         System.out.println("Trainee deleted: " + traineeUsername);

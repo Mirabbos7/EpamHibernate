@@ -11,6 +11,7 @@ import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingRepository;
 import org.example.repository.TrainingTypeRepository;
 import org.example.service.TrainingService;
+import org.example.specification.TrainingSpecification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +31,6 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Transactional
     @Override
-
     public Training create(String traineeUsername, String trainerUsername,
                            String name, TrainingType.TrainingTypeName typeName,
                            Date date, int durationMinutes) {
@@ -45,10 +45,8 @@ public class TrainingServiceImpl implements TrainingService {
 
         Trainee trainee = traineeRepository.findByUserUsername(traineeUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Trainee not found: " + traineeUsername));
-
         Trainer trainer = trainerRepository.findByUserUsername(trainerUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Trainer not found: " + trainerUsername));
-
         TrainingType trainingType = trainingTypeRepository.findByTrainingTypeName(typeName)
                 .orElseThrow(() -> new IllegalArgumentException("TrainingType not found: " + typeName));
 
@@ -76,19 +74,48 @@ public class TrainingServiceImpl implements TrainingService {
             String traineeUsername,
             Date fromDate,
             Date toDate,
+            String trainerUsername,
             TrainingType.TrainingTypeName typeName) {
 
         validateNotBlank(traineeUsername, "Trainee username");
+        log.info("Getting trainings for trainee: {}", traineeUsername);
 
-        List<Training> trainings =
-                trainingRepository.findByTraineeUserUsername(traineeUsername);
+        return trainingRepository.findAll(
+                TrainingSpecification.byTraineeCriteria(
+                        traineeUsername, fromDate, toDate, trainerUsername, typeName
+                )
+        );
+    }
 
-        return trainings.stream()
-                .filter(t -> fromDate == null || !t.getDate().before(fromDate))
-                .filter(t -> toDate == null || !t.getDate().after(toDate))
-                .filter(t -> typeName == null ||
-                        t.getTrainingType().getTrainingTypeName().equals(typeName))
-                .toList();
+    @Transactional(readOnly = true)
+    @Override
+    public List<Training> getTrainerTrainings(
+            String trainerUsername,
+            Date fromDate,
+            Date toDate,
+            String traineeUsername) {
+
+        validateNotBlank(trainerUsername, "Trainer username");
+        log.info("Getting trainings for trainer: {}", trainerUsername);
+
+        return trainingRepository.findAll(
+                TrainingSpecification.byTrainerCriteria(
+                        trainerUsername, fromDate, toDate, traineeUsername
+                )
+        );
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<Training> getTrainingsForTraineesNextWeek(List<Long> traineeIds) {
+        if (traineeIds == null || traineeIds.isEmpty()) {
+            throw new IllegalArgumentException("Trainee ids list cannot be empty");
+        }
+        log.info("Getting next week trainings for trainee ids: {}", traineeIds);
+
+        return trainingRepository.findAll(
+                TrainingSpecification.forTraineesNextWeek(traineeIds)
+        );
     }
 
     private void validateNotBlank(String value, String fieldName) {

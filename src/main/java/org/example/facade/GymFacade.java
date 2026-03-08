@@ -125,4 +125,9 @@ public class GymFacade {
         log.info("Facade: getTraining [id={}]", id);
         return trainingService.select(id);
     }
+
+    public List<Training> getTrainingsForTraineesNextWeek(List<Long> traineeIds) {
+        log.info("Facade: getTrainingsForTraineesNextWeek {}", traineeIds);
+        return trainingService.getTrainingsForTraineesNextWeek(traineeIds);
+    }
 }

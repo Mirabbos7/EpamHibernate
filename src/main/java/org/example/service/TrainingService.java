@@ -18,5 +18,13 @@ public interface TrainingService {
     List<Training> getTraineeTrainings(String traineeUsername,
                                        Date fromDate,
                                        Date toDate,
+                                       String trainerUsername,
                                        TrainingType.TrainingTypeName typeName);
+
+    List<Training> getTrainerTrainings(String trainerUsername,
+                                       Date fromDate,
+                                       Date toDate,
+                                       String traineeUsername);
+
+    List<Training> getTrainingsForTraineesNextWeek(List<Long> traineeIds);
 }

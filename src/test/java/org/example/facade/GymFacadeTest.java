@@ -257,4 +257,16 @@ class GymFacadeTest {
 
         verifyNoInteractions(traineeService, trainingService);
     }
+
+    @Test
+    void getTrainingsForTraineesNextWeek_delegatesToService() {
+        List<Training> trainings = List.of(new Training());
+        List<Long> ids = List.of(1L, 2L);
+        when(trainingService.getTrainingsForTraineesNextWeek(ids)).thenReturn(trainings);
+
+        List<Training> result = gymFacade.getTrainingsForTraineesNextWeek(ids);
+
+        assertThat(result).isEqualTo(trainings);
+        verify(trainingService).getTrainingsForTraineesNextWeek(ids);
+    }
 }

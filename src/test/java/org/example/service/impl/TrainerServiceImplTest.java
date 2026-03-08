@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -181,7 +183,7 @@ class TrainerServiceImplTest {
     @Test
     void getTrainings_shouldReturnList() {
         doNothing().when(authService).authenticate(eq("jane.smith"), eq("pass123"), any());
-        when(trainingRepository.findByTrainerUserUsername("jane.smith")).thenReturn(List.of(new Training()));
+        when(trainingRepository.findAll(any(Specification.class))).thenReturn(List.of(new Training()));
 
         List<Training> result = service.getTrainings("jane.smith", "pass123", null, null, null);
 

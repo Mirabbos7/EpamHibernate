@@ -12,6 +12,7 @@ import org.example.repository.TrainingRepository;
 import org.example.service.AuthService;
 import org.example.service.TraineeService;
 import org.example.service.UserService;
+import org.example.specification.TrainingSpecification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,20 +102,14 @@ public class TraineeServiceImpl implements TraineeService {
                                        Date fromDate, Date toDate,
                                        String trainerName,
                                        TrainingType.TrainingTypeName typeName) {
-
         authService.authenticate(username, password, this::matchUsernameAndPassword);
+        log.info("Getting trainings for trainee: {}", username);
 
-        List<Training> trainings =
-                trainingRepository.findByTraineeUserUsername(username);
-
-        return trainings.stream()
-                .filter(t -> fromDate == null || !t.getDate().before(fromDate))
-                .filter(t -> toDate == null || !t.getDate().after(toDate))
-                .filter(t -> trainerName == null ||
-                        t.getTrainer().getUser().getUsername().equals(trainerName))
-                .filter(t -> typeName == null ||
-                        t.getTrainingType().getTrainingTypeName().equals(typeName))
-                .toList();
+        return trainingRepository.findAll(
+                TrainingSpecification.byTraineeCriteria(
+                        username, fromDate, toDate, trainerName, typeName
+                )
+        );
     }
 
     @Transactional(readOnly = true)

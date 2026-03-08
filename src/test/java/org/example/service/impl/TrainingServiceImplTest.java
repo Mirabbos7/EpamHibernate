@@ -15,8 +15,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -179,5 +181,64 @@ class TrainingServiceImplTest {
         Optional<Training> result = trainingService.select(99L);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getTraineeTrainings_shouldReturnList() {
+        when(trainingRepository.findAll(any(Specification.class))).thenReturn(List.of(new Training()));
+
+        List<Training> result = trainingService.getTraineeTrainings(
+                "John.Doe", null, null, null, null);
+
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    void getTraineeTrainings_blankUsername_throwsException() {
+        assertThatThrownBy(() -> trainingService.getTraineeTrainings(
+                "", null, null, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Trainee username is required");
+    }
+
+    @Test
+    void getTrainerTrainings_shouldReturnList() {
+        when(trainingRepository.findAll(any(Specification.class))).thenReturn(List.of(new Training()));
+
+        List<Training> result = trainingService.getTrainerTrainings(
+                "Jane.Smith", null, null, null);
+
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    void getTrainerTrainings_blankUsername_throwsException() {
+        assertThatThrownBy(() -> trainingService.getTrainerTrainings(
+                "", null, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Trainer username is required");
+    }
+
+    @Test
+    void getTrainingsForTraineesNextWeek_shouldReturnList() {
+        when(trainingRepository.findAll(any(Specification.class))).thenReturn(List.of(new Training()));
+
+        List<Training> result = trainingService.getTrainingsForTraineesNextWeek(List.of(1L, 2L));
+
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    void getTrainingsForTraineesNextWeek_emptyIds_throwsException() {
+        assertThatThrownBy(() -> trainingService.getTrainingsForTraineesNextWeek(List.of()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Trainee ids list cannot be empty");
+    }
+
+    @Test
+    void getTrainingsForTraineesNextWeek_nullIds_throwsException() {
+        assertThatThrownBy(() -> trainingService.getTrainingsForTraineesNextWeek(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Trainee ids list cannot be empty");
     }
 }

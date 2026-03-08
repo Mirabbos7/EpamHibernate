@@ -11,6 +11,7 @@ import org.example.repository.TrainingTypeRepository;
 import org.example.service.AuthService;
 import org.example.service.TrainerService;
 import org.example.service.UserService;
+import org.example.specification.TrainingSpecification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -91,9 +92,16 @@ public class TrainerServiceImpl implements TrainerService {
     @Transactional(readOnly = true)
     @Override
     public List<Training> getTrainings(String username, String password,
-                                       Date fromDate, Date toDate, String traineeName) {
-        authService.authenticate(username, password, this::matchUsernameAndPassword );
-        return trainingRepository.findByTrainerUserUsername(username);
+                                       Date fromDate, Date toDate,
+                                       String traineeName) {
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
+        log.info("Getting trainings for trainer: {}", username);
+
+        return trainingRepository.findAll(
+                TrainingSpecification.byTrainerCriteria(
+                        username, fromDate, toDate, traineeName
+                )
+        );
     }
 
 
