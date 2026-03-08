@@ -92,6 +92,7 @@ public class TrainerServiceImpl implements TrainerService {
     @Transactional(readOnly = true)
     @Override
     public List<Training> getTrainings(String username, String password,
+<<<<<<< HEAD
                                        Date fromDate, Date toDate,
                                        String traineeName) {
         authService.authenticate(username, password, this::matchUsernameAndPassword);
@@ -101,9 +102,14 @@ public class TrainerServiceImpl implements TrainerService {
                 TrainingSpecification.byTrainerCriteria(
                         username, fromDate, toDate, traineeName
                 )
+=======
+                                       Date fromDate, Date toDate, String traineeName) {
+        authService.authenticate(username, password, this::matchUsernameAndPassword);
+        return trainingRepository.findByTrainerUsernameAndTraineeUsernameAndDateBetween(
+                username, traineeName, fromDate, toDate
+>>>>>>> origin/master
         );
     }
-
 
 
     private Trainer getOrThrow(String username) {

@@ -11,6 +11,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -577,10 +578,16 @@ class GymFacadeIT extends AbstractSpringIntegrationTest {
         @DisplayName("Should return empty list when no trainings match the given criteria")
         void shouldReturnEmptyListWhenNoTrainerTrainingsMatchCriteria() {
             final var trainer = trainerCreator.givenTrainerExists();
+            final var trainee = traineeCreator.givenTraineeExists();
+            trainingCreator.givenTrainingExists(t -> {
+                t.setTrainer(trainer);
+                t.setTrainee(trainee);
+                t.setDate(new Date(1000L));
+            });
             final var username = trainer.getUser().getUsername();
             final var password = trainer.getUser().getPassword();
-
-            final var trainings = gymFacade.getTrainerTrainings(username, password, null, null, null);
+            final var trainings = gymFacade
+                    .getTrainerTrainings(username, password, null, null, UUID.randomUUID().toString());
 
             assertThat(trainings).isEmpty();
         }
