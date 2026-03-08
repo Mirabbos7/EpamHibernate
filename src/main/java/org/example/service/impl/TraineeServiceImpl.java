@@ -52,7 +52,9 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public Optional<Trainee> findByUsername(String username, String password) {
         authService.authenticate(username, password, this::matchUsernameAndPassword);
-        return traineeRepository.findByUserUsername(username);
+        Optional<Trainee> trainee = traineeRepository.findByUserUsername(username);
+        trainee.ifPresent(t -> t.getUser().getFirstName());
+        return trainee;
     }
 
     @Transactional
